@@ -1,0 +1,4 @@
+-------------------------------------------------------------------------------
+Test set: com.example.bem.BemHttpTest
+-------------------------------------------------------------------------------
+Tests run: 9, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 3.152 s -- in com.example.bem.BemHttpTest

@@ -1,0 +1,9 @@
+com/example/bem/TestFixtures.class
+com/example/bem/PrandtlTipLossTest.class
+com/example/bem/ValidationTest.class
+com/example/bem/BemHttpTest.class
+com/example/bem/NonConvergenceTest.class
+com/example/bem/AirfoilRegistryTest.class
+com/example/bem/InflowGeometryTest.class
+com/example/bem/AerodynamicLawsTest.class
+com/example/bem/PolarInterpolatorTest.class

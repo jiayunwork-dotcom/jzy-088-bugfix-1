@@ -1,0 +1,9 @@
+/workspace/src/test/java/com/example/bem/AerodynamicLawsTest.java
+/workspace/src/test/java/com/example/bem/AirfoilRegistryTest.java
+/workspace/src/test/java/com/example/bem/BemHttpTest.java
+/workspace/src/test/java/com/example/bem/InflowGeometryTest.java
+/workspace/src/test/java/com/example/bem/NonConvergenceTest.java
+/workspace/src/test/java/com/example/bem/PolarInterpolatorTest.java
+/workspace/src/test/java/com/example/bem/PrandtlTipLossTest.java
+/workspace/src/test/java/com/example/bem/TestFixtures.java
+/workspace/src/test/java/com/example/bem/ValidationTest.java

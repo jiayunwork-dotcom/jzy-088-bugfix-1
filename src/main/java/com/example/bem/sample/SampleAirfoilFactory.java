@@ -10,13 +10,23 @@ import java.util.List;
  * 内置示例翼型（名义为 NACA 4412 风格的中等厚度翼型）极曲线构造器。
  *
  * 附着区（|α|≤15°）给出显式升阻力数据；失速后（15°&lt;|α|≤180°）用
- * 平板/Viterna 风格经验式延拓，保证整周攻角都有值、插值不需要外推。
+ * 平板模型延拓，保证整周攻角都有值、插值不需要外推。
+ *
+ * 平板模型的物理：分离流中压力占主导，合力垂直于弦线，法向力系数
+ * CN = CDmax·sinα（垂直平板 CDmax≈2.0），弦向摩擦忽略：
+ *   Cl = CN·cosα = CDmax·sinα·cosα
+ *   Cd = CN·sinα = CDmax·sin²α
+ * 这样 Ct = Cl·sinφ − Cd·cosφ = CN·sin(扭角)，深失速下扭矩方向仍由扭角
+ * 决定，与真实翼型 360° 极曲线一致。15°~20° 为附着数据到平板值的过渡带。
  * 角度单位为度。
  */
 @Component
 public class SampleAirfoilFactory {
 
     public static final String SAMPLE_POLAR_NAME = "NACA4412-SAMPLE";
+
+    /** 垂直平板法向力系数（2D 平板经典值）。 */
+    private static final double CD_MAX = 2.0;
 
     public AirfoilPolar build() {
         List<Double> a = new ArrayList<>();
@@ -47,22 +57,24 @@ public class SampleAirfoilFactory {
             double cos = Math.cos(rad);
             double abs = Math.abs(alpha);
 
+            // 平板值：合力垂直于弦线，CN = CDmax·sinα
+            double clPlate = CD_MAX * sin * cos;
+            double cdPlate = CD_MAX * sin * sin;
+
             double clFlat;
             double cdFlat;
             if (abs <= 20) {
                 // 15°~20° 之间从附着数据平滑过渡到平板
                 double t = (abs - 15.0) / 5.0;
-                double cdPlate = 0.7 + 0.3 * Math.abs(cos);
-                double clPlate = 0.9 * sin * Math.cos(rad);
                 double sign = alpha < 0 ? -1.0 : 1.0;
                 double cdAttached = alpha < 0 ? 0.060 : 0.078;
                 double clAttached = sign * 1.16;
                 clFlat = clAttached + t * (clPlate - clAttached);
                 cdFlat = cdAttached + t * (cdPlate - cdAttached);
             } else {
-                // 平板/Viterna：Cd 最大约 2.0（垂直），最小约 0.7（平行）
-                clFlat = 0.9 * sin * Math.cos(rad);
-                cdFlat = 0.7 + 1.3 * sin * sin;
+                // 平板延拓：Cd 从 0（顺流）到 2.0（垂直）
+                clFlat = clPlate;
+                cdFlat = cdPlate;
             }
             a.add((double) alpha);
             cl.add(clFlat);

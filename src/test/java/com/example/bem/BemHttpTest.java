@@ -89,6 +89,27 @@ class BemHttpTest {
     }
 
     @Test
+    @DisplayName("低叶尖速比端到端：内置算例只改 tipSpeedRatio，Cp 与各站微元扭矩均为正")
+    void rotorAnalysisAtLowTsr() throws Exception {
+        for (String tsr : new String[]{"1.5", "2.0", "3.0"}) {
+            String body = sampleRequestBody().replace("\"tipSpeedRatio\":6.0",
+                    "\"tipSpeedRatio\":" + tsr);
+            ResponseEntity<String> resp = rest.postForEntity(
+                    url("/api/analyze/rotor"), new HttpEntity<>(body, json()), String.class);
+            assertEquals(HttpStatus.OK, resp.getStatusCode());
+            JsonNode root = mapper.readTree(resp.getBody());
+            assertTrue(root.get("powerCoefficient").asDouble() > 0.0,
+                    "λ=" + tsr + " Cp 应为正：" + root.get("powerCoefficient"));
+            assertTrue(root.get("powerCoefficient").asDouble() < 16.0 / 27.0,
+                    "λ=" + tsr + " Cp 不得超过贝兹极限");
+            for (JsonNode s : root.get("stations")) {
+                assertTrue(s.get("dCq").asDouble() > 0.0,
+                        "λ=" + tsr + "、μ=" + s.get("mu") + " 微元扭矩应为正：" + s.get("dCq"));
+            }
+        }
+    }
+
+    @Test
     @DisplayName("非法叶尖速比返回 400 与机器码 TSR_NOT_POSITIVE")
     void invalidTsr() throws Exception {
         String body = sampleRequestBody().replace("\"tipSpeedRatio\":6.0",
