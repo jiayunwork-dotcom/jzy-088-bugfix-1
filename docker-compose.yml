@@ -1,0 +1,9 @@
+services:
+  bem-rotor-service:
+    build: .
+    image: bem-rotor-service:1.0.0
+    container_name: bem-rotor-service
+    ports:
+      # 宿主机:容器，单容器即可把接口挂到外面
+      - "8080:8080"
+    restart: unless-stopped
