@@ -6,6 +6,8 @@ __pycache__/
 dist/
 build/
 *.egg-info/
+target/
+.tools/
 
 # 环境与密钥
 .env

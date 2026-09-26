@@ -18,6 +18,25 @@ public class SampleAirfoilFactory {
 
     public static final String SAMPLE_POLAR_NAME = "NACA4412-SAMPLE";
 
+    /**
+     * 平板阻力峰值（α=±90°，来流正对板面）。实测平板约 1.9~2.0。
+     * 深失速后翼型受力近似为垂直于弦面的单个法向力
+     * CN = CD_MAX·sinα，升/阻系数是它在升力、阻力方向上的投影：
+     *   Cl = CN·cosα = CD_MAX·sinα·cosα
+     *   Cd = CN·sinα = CD_MAX·sin²α
+     * 两个系数必须投影自同一个 CN；若各自独立给值（例如 Cd 带常数偏移），
+     * 大攻角下升阻比会被压到远低于真实平板，Ct=Cl·sinφ−Cd·cosφ 在大入流角
+     * 工况（低叶尖速比）下会假性变负。
+     */
+    private static final double CD_MAX = 2.0;
+
+    /**
+     * 失速过渡完成的攻角宽度（度）。真实翼型在失速后约 2°~3° 内
+     * 升力骤降、阻力骤升，随后受力退化为平板法向力；过渡取 3°。
+     * 过渡段形状只有落进表格点才有效，故 15°~25° 区间每 1° 取一点。
+     */
+    private static final double STALL_TRANSITION_DEG = 3.0;
+
     public AirfoilPolar build() {
         List<Double> a = new ArrayList<>();
         List<Double> cl = new ArrayList<>();
@@ -37,32 +56,37 @@ public class SampleAirfoilFactory {
                 {15,   1.16, 0.078},
         };
 
-        // 失速后深失速/平板延拓（每 5° 一点，整周到 ±180°）
-        for (int alpha = -180; alpha <= 180; alpha += 5) {
-            if (alpha > -15 && alpha < 15) {
+        // 失速后深失速/平板延拓：15°~25° 每 1° 一点（解析失速过渡形状），
+        // 其余每 5° 一点，整周到 ±180°
+        for (int alpha = -180; alpha <= 180; alpha++) {
+            double abs = Math.abs(alpha);
+            if (abs < 15) {
                 continue; // 附着区由显式表覆盖
+            }
+            if (abs > 25 && alpha % 5 != 0) {
+                continue; // 深失速区平板曲线变化平缓，5° 一点足够
             }
             double rad = Math.toRadians(alpha);
             double sin = Math.sin(rad);
             double cos = Math.cos(rad);
-            double abs = Math.abs(alpha);
+
+            // 平板/Viterna：CN = CD_MAX·sinα 的投影，Cd 最大约 2.0（垂直来流）
+            double clPlate = CD_MAX * sin * cos;
+            double cdPlate = CD_MAX * sin * sin;
 
             double clFlat;
             double cdFlat;
-            if (abs <= 20) {
-                // 15°~20° 之间从附着数据平滑过渡到平板
-                double t = (abs - 15.0) / 5.0;
-                double cdPlate = 0.7 + 0.3 * Math.abs(cos);
-                double clPlate = 0.9 * sin * Math.cos(rad);
+            if (abs <= 15.0 + STALL_TRANSITION_DEG) {
+                // 失速过渡：从附着数据快速过渡到平板曲线
+                double t = (abs - 15.0) / STALL_TRANSITION_DEG;
                 double sign = alpha < 0 ? -1.0 : 1.0;
                 double cdAttached = alpha < 0 ? 0.060 : 0.078;
                 double clAttached = sign * 1.16;
                 clFlat = clAttached + t * (clPlate - clAttached);
                 cdFlat = cdAttached + t * (cdPlate - cdAttached);
             } else {
-                // 平板/Viterna：Cd 最大约 2.0（垂直），最小约 0.7（平行）
-                clFlat = 0.9 * sin * Math.cos(rad);
-                cdFlat = 0.7 + 1.3 * sin * sin;
+                clFlat = clPlate;
+                cdFlat = cdPlate;
             }
             a.add((double) alpha);
             cl.add(clFlat);
